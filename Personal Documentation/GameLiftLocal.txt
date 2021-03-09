@@ -1,0 +1,58 @@
+Necessary files/programs:
+
+-Java run-time environment
+-GameLift SDK
+-Amazon CLI
+
+
+Add VC_redist.64.exe to Server build files e.g. "C:\...\ProjectName\WindowsServer"
+create text file add
+
+VC_redist.x64.exe /q
+Engine\Extras\Redist\en-us\UE4PrereqSetup_x64.exe /q
+
+Rename to install.bat (make sure it is install.bat not install.bat.txt)
+
+
+To test using gamelift local: 
+
+open command prompt:(command prompt 1)
+type
+cd GameLift local directory
+(this is the directory to the gamelift local folder which I will include in a separate folder on onedrive)
+
+java -jar GameLiftLocal.jar -p 9080
+(this requires java rte)
+
+open second command prompt: (command prompt 2)
+type:
+cd ProjectServerFolder
+(this is the directory to project server folder
+e.g. : C:\...\Documents\Unreal Projects\ProjectName\WindowsServer\ProjectName\Binaries\Win64
+
+ProjectNameServer.exe -log -port=7779
+
+A UE Log window should open
+
+Check command prompt 1 for healthy status
+
+in command prompt 2:
+type:
+aws gamelift create-game-session --endpoint-url=http://localhost:9080 --maximum-player-session-count 2 --fleet-id new-fleet
+
+aws gamelift describe-game-sessions --endpoint-url=http://localhost:9080 --fleet-id new-fleet
+
+
+
+
+To get IP of fleet:
+Command prompt:
+
+aws gamelift describe-instances --fleet-id fleet-a1b2c3d4-a1b2-...
+
+
+127.0.0.1:7779
+
+The IP is likely to be this for GameLift local (I believe this is the local IP for all PC's)
+
+

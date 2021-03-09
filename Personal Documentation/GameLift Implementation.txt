@@ -1,0 +1,66 @@
+Necessary programs:
+
+-AWS CLI
+-VC_redist.64.exe
+
+Add VC_redist.64.exe to Server build files e.g. "C:\...\ProjectName\WindowsServer"
+
+create text file and type:
+
+VC_redist.x64.exe /q
+Engine\Extras\Redist\en-us\UE4PrereqSetup_x64.exe /q
+
+Rename to install.bat (make sure it is install.bat not install.bat.txt)
+
+In command prompt:
+
+aws gamelift upload-build --name GameLiftServerBuild --build-version 1.0.0 --build-root "C:\...\ProjectName\WindowsServer" --operating-system WINDOWS_2012 --region eu-west-2
+
+name and build version can be modified anyway you want
+
+
+
+
+If everything has gone smoothly your Server build is uploaded to AWS:
+
+-Log in to console and navigate to Amazon GameLift
+-You should see your build in the overview 
+-Click on the build
+-Create Fleet from build
+
+-Give it a name -> "GameLiftServerFleet"
+-Fleet Type ->On-Demand
+-Certificate Type->Disabled
+-Binary Type->Build
+-Build -> Select build just uploaded
+
+
+-Instance Type -> Compute optimized c5 large (free tier)
+
+Server process allocation:
+-Launch path C:\game\ -> ProjectName\Binaries\Win64\ProjectNameServer.exe
+-Launch parameters -> -port=7777
+-Concurrent processes -> 1
+
+-Max concurrent game session activation->No Limit
+-Timeout -> 600
+
+
+
+EC2 port settings:
+-Port Range -> 7777 (if you add more ports the range must be modified)
+-Protocol -> UDP
+-IP address range -> 0.0.0.0/0 
+
+Protection policy:
+-Protection policy -> No protection
+
+Initialize fleet!
+
+To get IP of fleet:
+Command prompt:
+
+aws gamelift describe-instances --fleet-id fleet-a1b2c3d4-a1b2-...
+
+
+
