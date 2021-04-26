@@ -26,6 +26,9 @@ public:
 
 	virtual TSharedRef<SWidget> RebuildWidget();
 
+	//Alot of these functions are BlueprintCallable for the opportunity to be called in blueprint graphs
+	//however all have been called with C++
+
 	UFUNCTION(BlueprintCallable)
 	void SetDrawSize(float InDrawSize);
 
@@ -44,6 +47,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool GetBoolInvert();
 
+	UFUNCTION(BlueprintCallable)
+	void SetClearRenderTarget();
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetClearRender();
+
 	UPROPERTY(EditAnywhere)
 	float DrawSize;
 
@@ -53,6 +62,8 @@ public:
 	UPROPERTY()
 	bool bInvertColour;
 
+	UPROPERTY(EditAnywhere)
+	int32 ClearRender = 0;
 
 	UPROPERTY(EditAnywhere)
 	UPanelWidget* RootWidget;

@@ -4,11 +4,11 @@
 #include "BoardActor.h"
 #include "UObject/UObjectGlobals.h"
 #include "Engine/CanvasRenderTarget2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "Kismet/KismetRenderingLibrary.h"
 #include "Components/SphereComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "WhiteBoard.h"
-#include "Components/WidgetComponent.h"
 #include "Blueprint/WidgetTree.h"
 #include "MyUserWidget.h"
 #include "Net/UnrealNetwork.h"
@@ -22,6 +22,7 @@ ABoardActor::ABoardActor()
 	bAlwaysRelevant = true;
 	bReplicates = true;
 
+	bReadyToDraw = false;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
 	RootComponent = Mesh;
@@ -42,7 +43,9 @@ ABoardActor::ABoardActor()
 	CollisionBox->SetRelativeScale3D(FVector(3000, 2, 2));
 	CollisionBox->SetGenerateOverlapEvents(true);
 	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	
 
+	//OnRep_SetUpBoard();
 }
 
 // Called when the game starts or when spawned
@@ -58,33 +61,23 @@ void ABoardActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	//DOREPLIFETIME(ABoardActor, BoardMaterialMI);
-	DOREPLIFETIME(ABoardActor, Mesh);
-	//DOREPLIFETIME(ABoardActor, RenderTarget);
-	//DOREPLIFETIME(ABoardActor, PenMI);
-	DOREPLIFETIME(ABoardActor, XYCoords);
-	DOREPLIFETIME(ABoardActor, BoardMaterial);
-	DOREPLIFETIME(ABoardActor, WhiteboardPen);
-
-	DOREPLIFETIME(ABoardActor, DrawSize);
-	DOREPLIFETIME(ABoardActor, BoardOpacity);
-	DOREPLIFETIME(ABoardActor, bInvertColour);
 }
 
 // Called every frame
 void ABoardActor::Tick(float DeltaTime)
 {
-	//RenderTarget->GameThread_GetRenderTargetResource()->ReadLinearColorPixels(Colors);
 	
 	Super::Tick(DeltaTime);
 }
 
+
+//Paints to render target at the location specified
 void ABoardActor::Paint(FVector2D PaintLocation)
 {
-	if (this)
-	{
-		XYCoords = FLinearColor(PaintLocation.X, PaintLocation.Y, 0, 1);
 
+	XYCoords = FLinearColor(PaintLocation.X, PaintLocation.Y, 0, 1);
+	if (bReadyToDraw)
+	{
 		if (PenMI)
 		{
 			PenMI->SetVectorParameterValue("Param", XYCoords);
@@ -93,8 +86,7 @@ void ABoardActor::Paint(FVector2D PaintLocation)
 	}
 }
 
-
-
+//Inverts the colour of the board, draw colour becomes board colour and vice versa
 void ABoardActor::OnRep_OnSetInvert()
 {
 	FLinearColor TempDrawColour;
@@ -121,8 +113,12 @@ void ABoardActor::OnRep_SetUpBoard()
 	RenderTarget->UpdateResourceImmediate(true);
 	PenMI = UMaterialInstanceDynamic::Create(WhiteboardPen, this);
 	BoardMaterialMI->SetTextureParameterValue("TextureExpression", RenderTarget);
+
+	bReadyToDraw = true;
 }
 
+//Called in PresentationFinalCharacter (PFC) to invert the colour of the whiteboard
+//Prints out to 
 bool ABoardActor::Client_OnRep_SetInvertColour_Validate(bool InbInvertColour)
 {
 	return true;
@@ -132,32 +128,53 @@ bool ABoardActor::Client_OnRep_SetInvertColour_Validate(bool InbInvertColour)
 void ABoardActor::Client_OnRep_SetInvertColour_Implementation(bool InbInvertColour)
 {
 	bInvertColour = InbInvertColour;
-	if (bInvertColour == true)
+	if (bReadyToDraw)
+	{
+		if (bInvertColour == true)
+		{
+			if (BoardMaterialMI)
+			{
+				FLinearColor TempDrawColour;
+				TempDrawColour = BoardMaterialMI->K2_GetVectorParameterValue("DrawColour");
+				BoardMaterialMI->SetVectorParameterValue("DrawColour", BoardMaterialMI->K2_GetVectorParameterValue("BoardColour"));
+				BoardMaterialMI->SetVectorParameterValue("BoardColour", TempDrawColour);
+			}
+		}
+	}
+	//UE_LOG(LogTemp, Warning, TEXT("BoardActor Invert: %s"), bInvertColour ? TEXT("true") : TEXT("false"));
+}
+
+
+//Sets the opacity of the board, checking the material instance exists first
+void ABoardActor::SetBoardOpacity(float inOpacity)
+{
+	if (bReadyToDraw)
 	{
 		if (BoardMaterialMI)
 		{
-			FLinearColor TempDrawColour;
-			TempDrawColour = BoardMaterialMI->K2_GetVectorParameterValue("DrawColour");
-			BoardMaterialMI->SetVectorParameterValue("DrawColour", BoardMaterialMI->K2_GetVectorParameterValue("BoardColour"));
-			BoardMaterialMI->SetVectorParameterValue("BoardColour", TempDrawColour);
+			BoardMaterialMI->SetScalarParameterValue("Opacity", inOpacity);
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("BoardActor Invert: %s"), bInvertColour ? TEXT("true") : TEXT("false"));
 }
 
-void ABoardActor::SetBoardOpacity(float inOpacity)
+//sets the draw size of the pen
+void ABoardActor::SetDrawSize(float inDrawSize)
 {
-	if (BoardMaterialMI)
+	if (bReadyToDraw)
 	{
-		BoardMaterialMI->SetScalarParameterValue("Opacity", inOpacity);
+		if (PenMI)
+		{
+			PenMI->SetScalarParameterValue("DrawSize", inDrawSize);
+		}
 	}
 }
 
-void ABoardActor::SetDrawSize(float inDrawSize)
+//Clears the render target to wipe the board
+void ABoardActor::ClearBoard()
 {
-	if (PenMI)
+	if (bReadyToDraw)
 	{
-		PenMI->SetScalarParameterValue("DrawSize", inDrawSize);
+		UKismetRenderingLibrary::ClearRenderTarget2D(this, RenderTarget, FLinearColor::Black);
 	}
 }
 

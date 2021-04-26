@@ -23,16 +23,21 @@ void UMyUserWidget::NativeConstruct()
 	Super::NativeConstruct();
 }
 
+//Calls the underlying slate to rebuild the widget
 TSharedRef<SWidget> UMyUserWidget::RebuildWidget()
 {
+	//returns the widget
 	TSharedRef<SWidget> Widget = Super::RebuildWidget();
 
+	//Creates a rootwidget element 
 	RootWidget = Cast<UPanelWidget>(GetRootWidget());
 
 	if (!RootWidget)
 	{
+		//If the rootwidget isn't valid, makes one from the static class
 		RootWidget = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("RootWidget"));
 
+		//Creates a slot for the root widget on the screen
 		UCanvasPanelSlot* RootWidgetSlot = Cast<UCanvasPanelSlot>(RootWidget->Slot);
 
 		if (RootWidgetSlot)
@@ -47,6 +52,13 @@ TSharedRef<SWidget> UMyUserWidget::RebuildWidget()
 
 	if (RootWidget && WidgetTree)
 	{
+		/*For each component creates the component using the contruct widget and adds it to the root widget
+		Then sets parameters to the component
+		Then creates a slot for it to define where it is in the widget/on the screen
+		
+		.AddDynamic binds a function to the slider/button. With buttons, no parameters can be passed. With sliders
+		the slider value is passed in to the function*/
+
 		UTextBlock* EditorText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), FName(TEXT("EditorText")));
 		RootWidget->AddChild(EditorText);
 		EditorText->SetText(FText::FromString("Whiteboard Parameter Editor"));
@@ -122,6 +134,25 @@ TSharedRef<SWidget> UMyUserWidget::RebuildWidget()
 		InvertColourButtonSlot->SetOffsets(FMargin(0.f, 0.f));
 		InvertColourButtonSlot->SetSize(FVector2D(100.f, 100.f));
 
+		UButton* ClearRenderTargetButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("ClearRenderTargetButton"));
+		RootWidget->AddChild(ClearRenderTargetButton);
+		ClearRenderTargetButton->OnClicked.AddDynamic(this, &UMyUserWidget::SetClearRenderTarget);
+
+
+		UTextBlock* ClearRenderText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), FName(TEXT("ClearRenderTargetText")));
+		RootWidget->AddChild(ClearRenderText);
+		ClearRenderText->SetText(FText::FromString("Clear Render Target"));
+
+		UCanvasPanelSlot* ClearRenderTextSlot = Cast<UCanvasPanelSlot>(ClearRenderText->Slot);
+		ClearRenderTextSlot->SetAnchors(FAnchors(0.f, 0.55f)); //should be enough space
+		ClearRenderTextSlot->SetOffsets(FMargin(0.f, 0.f));
+
+		UCanvasPanelSlot* ClearRenderTargetButtonSlot = Cast<UCanvasPanelSlot>(ClearRenderTargetButton->Slot);
+		ClearRenderTargetButtonSlot->SetAutoSize(false);
+		ClearRenderTargetButtonSlot->SetAnchors(FAnchors(0.f, 0.6f)); //should be enough space
+		ClearRenderTargetButtonSlot->SetOffsets(FMargin(0.f, 0.f));
+		ClearRenderTargetButtonSlot->SetSize(FVector2D(100.f, 100.f));
+
 
 
 		if (TextboxSlot)
@@ -137,27 +168,39 @@ TSharedRef<SWidget> UMyUserWidget::RebuildWidget()
 
 void UMyUserWidget::SetDrawSize(float InDrawSize)
 {
+	//Takes slider value to set the draw size
 	DrawSize = InDrawSize;
 }
 
 
 float UMyUserWidget::GetDrawSize()
 {
-	return DrawSize;
+	//returns draw size (called in PresentationFinalCharacter)
+	if (DrawSize != 0 || DrawSize != NULL)
+	{
+		return DrawSize;
+	}
+	else
+	{
+		return 0.01f;
+	}
 }
 
 void UMyUserWidget::SetWhiteboardOpacity(float InOpacity)
 {
+	//Sets opacity based on slider value
 	WhiteBoardOpacity = InOpacity;
 }
 
 float UMyUserWidget::GetWhiteboardOpacity()
 {
+	//Called in PresentationFinalCharacter (PFC) to be replicated to other users
 	return WhiteBoardOpacity;
 }
 
 void UMyUserWidget::SetBoolInvert()
 {
+	//Sets the colour of the board from a whiteboard to blackboard and vice versa
 	if (bInvertColour == false)
 	{
 		bInvertColour = true;
@@ -170,5 +213,21 @@ void UMyUserWidget::SetBoolInvert()
 
 bool UMyUserWidget::GetBoolInvert()
 {
+	//Called in PFC 
 	return bInvertColour;
+}
+
+void UMyUserWidget::SetClearRenderTarget()
+{
+	//Actually better than using a bool as the bool can cause bugs due to not being replicated
+	//since replication only occurs when there's a change
+	//However, user has to double click to clear the render target due to PFC function
+	// (ClearRender % 2) == 0 <<< happens every second number
+	ClearRender++;
+}
+
+int32 UMyUserWidget::GetClearRender()
+{
+	//Called in PFC	
+	return ClearRender;
 }

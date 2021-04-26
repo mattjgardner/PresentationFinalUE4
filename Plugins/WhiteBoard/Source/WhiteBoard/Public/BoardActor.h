@@ -15,75 +15,55 @@ public:
 	// Sets default values for this actor's properties
 	ABoardActor();
 
+	//Create box to collide with so when collision, user pops UI for controlling the whiteboard
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* CollisionBox;
-
+	
+	//Mesh for the whiteboard, is set to a cube
 	UPROPERTY(EditAnywhere, Replicated)
 	UStaticMeshComponent* Mesh;
 
-	UPROPERTY(EditAnywhere)
-	UStaticMeshComponent* CylinderMesh;
-
+	//Material of the board
 	UPROPERTY(EditAnywhere, Replicated)
 	UMaterial* BoardMaterial;
 
+	//Material instance of the board material
 	UPROPERTY(EditAnywhere)
 	UMaterialInstanceDynamic* BoardMaterialMI;
 
+	//Material for the Pen
 	UPROPERTY(EditAnywhere, Replicated)
 	UMaterial* WhiteboardPen;
 
-	UPROPERTY(EditAnywhere)
-	class UCanvasRenderTarget2D* RenderTarget;
-
-	UPROPERTY(EditAnywhere)
-	class UWidgetComponent* Widget;
-
-	UPROPERTY()
-	bool bOverlap;
-
-	UPROPERTY(Replicated)
-	float DrawSize;
-
-	UPROPERTY(Replicated)
-	float BoardOpacity;
-
-	UPROPERTY(Replicated)
-	bool bInvertColour;
-
-	UPROPERTY(Replicated)
-	FLinearColor XYCoords;
-	
-	//static TSharedRef<SRuntimeBoardEditorWidget, ESPMode::NotThreadSafe> BoardEditorWidgetRef;
-
-	//TSharedPtr<SRuntimeBoardEditorWidget> BoardEditorWidgetPtr;
-
-	//SRuntimeBoardEditorWidget* BoardEditorWidget;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UUserWidget> WhiteboardEditorWidgetClass = nullptr;
-
-
-	UPROPERTY()
-	class UMyUserWidget* WhiteboardEditorWidget;
-
-	UPROPERTY()
-	TArray<FLinearColor> Colors;
-
-	//
-	//UPROPERTY(Replicated)
-	//UTexture2DDynamic* DynamicTexture;
-
-
+	//Material Instance for the pen
 	UPROPERTY()
 	UMaterialInstanceDynamic* PenMI;
 
+	//Render target created when board actor is spawned
+	//this means all whiteboards can have different writing on
+	//as a shared render target means they all display the same thing
+	UPROPERTY(EditAnywhere)
+	class UCanvasRenderTarget2D* RenderTarget;
+
+	//replicated
+	UPROPERTY()
+	float DrawSize;
+
+	UPROPERTY()
+	float BoardOpacity;
+
+	UPROPERTY()
+	bool bInvertColour;
+
+	UPROPERTY()
+	FLinearColor XYCoords;
+
+	UPROPERTY()
+	bool bReadyToDraw;
+
+
 	UFUNCTION(BlueprintCallable)
 	void Paint(FVector2D PaintLocation);
-
-
-	//UFUNCTION(BlueprintCallable)
-	//void SetDrawSize(float DrawSize);
 
 	UFUNCTION()
 	void OnRep_SetUpBoard();
@@ -94,16 +74,13 @@ public:
 	UFUNCTION()
 	void SetDrawSize(float inDrawSize);
 
-	//client and netmulticast work
-	//UFUNCTION(NetMultiCast, Reliable, WithValidation)
-	//void Multi_OnRep_SetInvertColour(bool InbInvertColour);
-	//bool Multi_OnRep_SetInvertColour_Validate(bool InbInvertColour);
-	//void Multi_OnRep_SetInvertColour_Implementation(bool InbInvertColour);
-
 	UFUNCTION(Client, Reliable, WithValidation)
 	void Client_OnRep_SetInvertColour(bool InbInvertColour);
 	bool Client_OnRep_SetInvertColour_Validate(bool InbInvertColour);
 	void Client_OnRep_SetInvertColour_Implementation(bool InbInvertColour);
+
+	UFUNCTION()
+	void ClearBoard();
 
 
 protected:
@@ -111,16 +88,6 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	//UFUNCTION(NetMulticast, Reliable, WithValidation)
-	//void Server_OnSetInvert(bool InInvertColour);
-	//bool Server_OnSetInvert_Validate(bool InInvertColour);
-	//void Server_OnSetInvert_Implementation(bool InInvertColour);
-
-	//UFUNCTION(Server, Reliable, WithValidation)
-	//void Client_OnSetInvert(bool InInvertColour);
-	//bool Client_OnSetInvert_Validate(bool InInvertColour);
-	//void Client_OnSetInvert_Implementation(bool InInvertColour);
 
 	UFUNCTION()
 	void OnRep_OnSetInvert();
