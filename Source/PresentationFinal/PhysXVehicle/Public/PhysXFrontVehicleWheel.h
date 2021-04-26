@@ -21,7 +21,6 @@ class PRESENTATIONFINAL_API UPhysXFrontVehicleWheel : public UVehicleWheel
 public:
 	UPhysXFrontVehicleWheel();
 
-	//void SetSuspensionDampingRatio(float inRatio);
 	
 };
 

@@ -8,44 +8,6 @@
 #include "PresentationFinalCharacter.generated.h"
 
 
-USTRUCT(BlueprintType)
-struct FVehicleControllerStruct
-{
-	GENERATED_BODY();
-
-public:
-	UPROPERTY()
-		TArray<APlayerController*> MapKeys;
-
-	UPROPERTY()
-		TArray<APhysXVehicle*> MapValues;
-
-		FVehicleControllerStruct(){}
-
-		void AddKey(APlayerController* inKey)
-		{
-			MapKeys.Add(inKey);
-		}
-
-		void AddValue(APhysXVehicle* inValue)
-		{
-			MapValues.Add(inValue);
-		}
-
-		APhysXVehicle* GetValueFromKey(APlayerController* inKey)
-		{
-			APhysXVehicle* Vehicle = nullptr;
-			for (int32 i = 0; i < MapKeys.Num(); i++)
-			{
-				if (inKey->GetName() == MapKeys[i]->GetName())
-				{
-					UE_LOG(LogTemp, Log, TEXT("working"));
-					Vehicle = MapValues[i];
-				}
-			}
-			return Vehicle;
-		}
-};
 
 UCLASS(config=Game)
 class APresentationFinalCharacter : public ACharacter
@@ -74,9 +36,6 @@ class APresentationFinalCharacter : public ACharacter
 
 	UPROPERTY()
 		class APlayerController* PlayerController;
-
-	//UPROPERTY(BlueprintReadWrite)
-		//class APresentationFinalCharacter* PlayerCharacter;
 
 	//UPROPERTY(BlueprintReadWrite)
 		class APhysXVehicle* ControlledVehicle;
@@ -115,14 +74,8 @@ class APresentationFinalCharacter : public ACharacter
 	UPROPERTY(ReplicatedUsing = OnRep_PauseSlideshow);
 	bool bPauseSlideshow;
 
-	UPROPERTY(Replicated)
-	FVehicleControllerStruct VehicleControllerStruct;
-
-	UPROPERTY(ReplicatedUsing=OnRep_VehicleStruct)
-		TArray<APlayerController*> ControllerMapKeys;
-
-	UPROPERTY(Replicated=OnRep_VehicleStruct)
-		TArray<APhysXVehicle*> VehicleMapValues;
+	UPROPERTY(ReplicatedUsing = OnRep_ClearRenderTarget)
+	int32 ClearRenderTarget;
 
 
 	UFUNCTION()
@@ -155,8 +108,6 @@ class APresentationFinalCharacter : public ACharacter
 	UFUNCTION()
 		void OnTickSlideControlCheck();
 
-	UFUNCTION(BlueprintCallable)
-		APhysXVehicle* GetPhysXVehicleFromController(APlayerController* inController);
 
 
 
@@ -225,25 +176,16 @@ class APresentationFinalCharacter : public ACharacter
 
 		void UpdatePauseSlideshow();
 
+		UFUNCTION(Server, Reliable, WithValidation)
+			void ServerClearRenderTarget(int32 InClearRender);
+		bool ServerClearRenderTarget_Validate(int32 InClearRender);
+		void ServerClearRenderTarget_Implementation(int32 InClearRender);
 
-		//UFUNCTION(Server, Reliable, WithValidation)
-		//	void ServerUnPauseSlideshow(bool InbPauseShow);
-		//bool ServerUnPauseSlideshow_Validate(bool InbPauseShow);
-		//void ServerUnPauseSlideshow_Implementation(bool InbPauseShow);
 
-		//UFUNCTION()
-		//	void OnRep_UnPauseSlideshow();
+		UFUNCTION()
+			void OnRep_ClearRenderTarget();
 
-		//void UpdateUnPauseSlideshow();
-
-		//UFUNCTION(Server, Reliable, WithValidation)
-		//	void ServerPauseSlideshow(bool InbPauseShow);
-		//bool ServerPauseSlideshow_Validate(bool InbPauseShow);
-		//void ServerPauseSlideshow_Implementation(bool InbPauseShow);
-
-		//void OnRep_PauseSlideShow();
-
-		//void UpdatePauseSlideShow();
+		void UpdateClearRenderTarget();
 
 //if replication for draw size is required
 	UFUNCTION()
@@ -261,10 +203,6 @@ class APresentationFinalCharacter : public ACharacter
 		bool ServerUpdateDrawSize_Validate(float inDrawSize);
 		void ServerUpdateDrawSize_Implementation(float InDrawSize);
 
-		UFUNCTION(BlueprintCallable, Server, Reliable, WithValidation)
-			void ServerSpawnAndPossessPawn(APlayerController* inPlayerController, TSubclassOf<class APawn> inPawn);
-		bool ServerSpawnAndPossessPawn_Validate(APlayerController* inPlayerController, TSubclassOf<class APawn> inPawn);
-		void ServerSpawnAndPossessPawn_Implementation(APlayerController* inPlayerController, TSubclassOf<class APawn> inPawn);
 
 		UFUNCTION(BlueprintCallable, Server, Reliable, WithValidation)
 			void ServerSwitchPossessedPawn(APlayerController* inPlayerController, TSubclassOf<class APawn> inPawn);
@@ -280,6 +218,10 @@ class APresentationFinalCharacter : public ACharacter
 
 		//UFUNCTION(BlueprintCallable)
 		//	void SwitchPossessedPawn(APlayerController* inPlayerController, TSubclassOf<class APawn> inPawn);
+
+
+		UFUNCTION(BlueprintCallable)
+			void ClientSpawnWhiteboard();
 
 
 

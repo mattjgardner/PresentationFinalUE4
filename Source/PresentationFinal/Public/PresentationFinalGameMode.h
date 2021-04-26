@@ -72,19 +72,6 @@ public:
 	APresentationFinalGameMode();
 
 
-	//void SpawnAndPossessVehiclePawn(APresentationFinalCharacter* inCharacter, APlayerController* inPlayerController, TSubclassOf<APawn> inPawn);
-
-	//UPROPERTY(Replicated)
-	//bool bInvert;
-
-	
-
-
-	//UFUNCTION(NetMulticast, Reliable)
-	//void UpdateInvertColour();
-	//bool UpdateInvertColour_Validate();
-	//void UpdateInvertColour_Implementation();
-
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

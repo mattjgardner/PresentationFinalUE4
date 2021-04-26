@@ -33,24 +33,9 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	class UWheeledVehicleMovementComponent4W* Vehicle;
 
+	//Create reference to controlled character so player can toggle between vehicle and character
 	UPROPERTY(BlueprintReadWrite)
-	class UPhysXFrontVehicleWheel* FrontLeftWheelP;
-
-
-	//UPROPERTY(BlueprintReadWrite)
-	//	FWheelSetup FrontLeftWheel;
-
-
-	//UPROPERTY(BlueprintReadWrite)
-	//	FWheelSetup FrontRightWheel;
-
-
-	//UPROPERTY(BlueprintReadWrite)
-	//	FWheelSetup RearLeftWheel;
-
-
-	//UPROPERTY(BlueprintReadWrite)
-	//	FWheelSetup RearRightWheel;
+		class APresentationFinalCharacter* PlayerCharacter;
 
 
 	FSkeletalMeshModel* MeshModel;
@@ -58,10 +43,6 @@ public:
 #if WITH_EDITOR
 	TArray<FSoftSkinVertex> Vertices;
 #endif
-
-
-	//UPROPERTY()
-	//	FWheelSetup FrontLeftWheel;
 
 	UFUNCTION(BlueprintCallable)
 	void SetMaxRPM(float inMaxRPM);
@@ -100,6 +81,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 		float GetMaxSuspensionCompression();
 
+	UFUNCTION(BlueprintCallable)
+		void SetPlayerCharacter(APresentationFinalCharacter* inCharacter);
+
+	UFUNCTION(BlueprintCallable)
+		APresentationFinalCharacter* GetPlayerCharacter();
 
 	UFUNCTION(BlueprintCallable, Server, Reliable, WithValidation)
 		void ServerSwitchToCharacter(APlayerController* inPlayerController, APresentationFinalCharacter* inCharacter);
@@ -123,42 +109,5 @@ protected:
 
 
 
-//USTRUCT(BlueprintType)
-//struct FRuntimeFloatCurve
-//{
-//	GENERATED_BODY();
-//
-//
-//};
-//
-//
-//
-//USTRUCT(BlueprintType)
-//struct FVehicleDifferential4WData
-//{
-//	GENERATED_BODY();
-//
-//
-//
-//};
-//
-//USTRUCT(BlueprintType)
-//struct FVehicleEngineData
-//{
-//	GENERATED_BODY();
-//
-//
-//
-//
-//};
-//
-//
-//USTRUCT(BlueprintType)
-//struct FVehicleTransmissionSetup
-//{
-//	GENERATED_BODY();
-//
-//
-//};
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

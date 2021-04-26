@@ -15,6 +15,15 @@ public:
 	// Sets default values for this actor's properties
 	ASlideActor();
 
+	//All properties exposed to editor so users can change the values in the editor.
+	//E.g. the slides, slide sounds to have a custom sound not defined by the 
+	//python import folder
+
+
+
+
+	//Anything that's not a Path and the mesh should be set in the editor to prevent crashes in the packaged build
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FString GameDirectory;
 
@@ -58,9 +67,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<float> SlideTimes;
 
-	//UPROPERTY()
-	//class FTimerDelegate* TimerDelegate;
-
 	UPROPERTY()
 		FTimerHandle SlideTimerHandle;
 
@@ -79,9 +85,6 @@ public:
 	UFUNCTION()
 		void PauseUnpauseSlideshow();
 
-	/*UFUNCTION()
-	void SlideController();*/
-
 	UFUNCTION()
 		void SetSlide(int32 inSlideIndex, TArray<UMaterial*> inMaterials);
 
@@ -99,10 +102,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void SetBoolIsUsingOVRLipSync();
-
-
-	//UFUNCTION(BlueprintCallable)
-	//	void GetOverlappingActors();
 
 	UFUNCTION(BlueprintCallable)
 		void GetSoundData(TArray<float> &inSlideTimes, TArray<USoundBase*> &inSlideSounds);

@@ -18,6 +18,9 @@ A3DCartesianPlot::A3DCartesianPlot()
 	PrimaryActorTick.bCanEverTick = true;
 	
 	
+	//Creates 3 axes from arrow components then colours them.
+
+
 
 	AxisSize = 100;
 	ArrowSize = 10;
@@ -118,6 +121,8 @@ void A3DCartesianPlot::ScaleAxis(TArray<float> inData, TArray<float> &RelativeVa
 
 void A3DCartesianPlot::PlotData(TArray<float> ScaledXAxis, TArray<float> ScaledYAxis, TArray<float> ScaledZAxis)
 {
+	//Commented out because it doesnt work, was supposed to plot 3 points one on the X axis, one on Y, one on Z at the end of them
+	
 	FVector OriginPosition = Origin->GetComponentLocation();
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

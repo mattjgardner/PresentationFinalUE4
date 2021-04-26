@@ -12,11 +12,7 @@ ACartesianPlotPoint::ACartesianPlotPoint()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//GraphPoint = CreateDefaultSubobject<USphereComponent>("GraphPoint");
-	//GraphPoint->SetRelativeScale3D(FVector(0.3, 0.3, 0.3));
-	//GraphPoint->ShapeColor = FColor::Black;
-	//GraphPoint->SetHiddenInGame(false);
-	////GraphPoint->SetVisibility(true);
+	//Creates a point for a 3D graph
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>("GraphPoint");
 	UStaticMesh* SphereMesh = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'")).Object;

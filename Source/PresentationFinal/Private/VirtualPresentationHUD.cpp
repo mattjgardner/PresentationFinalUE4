@@ -15,16 +15,8 @@
 AVirtualPresentationHUD::AVirtualPresentationHUD()
 {
 	// Set the crosshair texture
-
-
-	//bAddedToViewport = false;
-
 	static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT("Texture2D'/Game/ThirdPerson/Textures/FirstPersonCrosshair.FirstPersonCrosshair'"));
 	CrosshairTex = CrosshairTexObj.Object;
-
-	//static ConstructorHelpers::FObjectFinder<UUserWidget> IPWidgetObj(TEXT("WidgetBlueprint'/Game/UserInterface/UserInterfaceIP.UserInterfaceIP'"));
-	//IPWidget = IPWidgetObj.Object;
-	
 
 }
 
@@ -45,9 +37,9 @@ void AVirtualPresentationHUD::DrawHUD()
 	TileItem.BlendMode = SE_BLEND_Translucent;
 	Canvas->DrawItem(TileItem);
 	
+	
 
-	//IPWidget->AddToViewport();
-
+	//If the custom widgets are nullptr, create them and call the RebuildWidget function to fill the widget.
 
 	if (WhiteboardEditorWidget == nullptr)
 	{
@@ -63,19 +55,12 @@ void AVirtualPresentationHUD::DrawHUD()
 }
 
 
+//Custom functions to add and remove widgets from the HUD
+
 void AVirtualPresentationHUD::AddWhiteboardEditorWidget()
 {
 	WhiteboardEditorWidget->AddToViewport();
 	bAddedToViewport = true;
-
-	//FString LevelName = "35.176.222.3:7777";
-
-	//FGuid PlayerSessionGuid = FGuid::NewGuid();
-	//FGuid PlayerGuid = FGuid::NewGuid();
-	//
-	//const FString& Options = "?PlayerSessionId=" + PlayerSessionGuid.ToString() + "?PlayerId" + PlayerGuid.ToString();
-	//
-	//UGameplayStatics::OpenLevel(GetWorld(), FName(*LevelName), false, Options);
 }
 
 

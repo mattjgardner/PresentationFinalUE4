@@ -27,6 +27,7 @@ void AMultiplayerVehicleSpawnLocation::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+//Function to get the location of the spawn point
 FVector AMultiplayerVehicleSpawnLocation::GetLocation()
 {
 	return LocationComponent->GetComponentLocation();

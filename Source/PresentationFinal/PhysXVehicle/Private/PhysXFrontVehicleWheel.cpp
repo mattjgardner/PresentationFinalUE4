@@ -9,6 +9,9 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 UPhysXFrontVehicleWheel::UPhysXFrontVehicleWheel()
 {
+	//Class for the front wheels of a 
+	//It isn't affected by the handbrake
+
 	ShapeRadius = 50.f;
 	ShapeWidth = 15.0f;
 	bAffectedByHandbrake = false;
@@ -20,15 +23,7 @@ UPhysXFrontVehicleWheel::UPhysXFrontVehicleWheel()
 	SuspensionMaxDrop = 15.0f;
 	SuspensionNaturalFrequency = 9.0f;
 	SuspensionDampingRatio = 1.05f;
-
-	//TireConfig->SetFrictionScale(0.3f);
-
-	
 }
 
-//void UPhysXFrontVehicleWheel::SetSuspensionDampingRatio(float inRatio)
-//{
-//	SuspensionDampingRatio = inRatio;
-//}
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

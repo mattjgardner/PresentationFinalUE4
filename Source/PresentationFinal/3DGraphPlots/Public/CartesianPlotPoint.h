@@ -17,6 +17,7 @@ public:
 	ACartesianPlotPoint();
 
 
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		class USphereComponent* GraphPoint;
 

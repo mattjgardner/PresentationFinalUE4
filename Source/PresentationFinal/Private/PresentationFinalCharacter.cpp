@@ -25,6 +25,9 @@
 APresentationFinalCharacter::APresentationFinalCharacter()
 {
 	bReplicates = true;
+	MarkerDrawSize = 0.01f;
+
+	//AddToRoot();
 
 	//UGameplayStatics::OpenLevel();
 	// Set size for collision capsule
@@ -35,6 +38,7 @@ APresentationFinalCharacter::APresentationFinalCharacter()
 	BaseLookUpRate = 45.f;
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
+	//apart from when moving left to right
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
@@ -45,17 +49,7 @@ APresentationFinalCharacter::APresentationFinalCharacter()
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 
-	//// Create a camera boom (pulls in towards the player if there is a collision)
-	//CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	//CameraBoom->SetupAttachment(RootComponent);
-	//CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
-	//CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-
-	//// Create a follow camera
-	//FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	//FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	//FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-
+	//Sets the camera location to where the head of the third person mannequin should be 
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
 	FirstPersonCameraComponent->SetRelativeLocation(FVector(19.f, 1.75f, 64.f)); // Position the camera
@@ -64,6 +58,8 @@ APresentationFinalCharacter::APresentationFinalCharacter()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 
+
+	//Allows for overlap events to occur and binds a function to it
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APresentationFinalCharacter::BeginOverlap);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &APresentationFinalCharacter::EndOverlap);
@@ -73,18 +69,20 @@ APresentationFinalCharacter::APresentationFinalCharacter()
 void APresentationFinalCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	/*if (bDraw == true)
-	{
-		Draw();
-	}*/
 
+	//Called every game tick functions explained above their implementation
 	OnTickWhiteboardControlCheck();
-	
+
 	OnTickSlideControlCheck();
 
 }
 
+
+//Does checks to prevent crashes
+//Then checks the playercontroller is local (not on a server)
+//And checks the role is <ROLE_Authority (i.e. they're a client)
+//Then calls a Server RPC to set certain whiteboard properties
+//based on the widget values
 void APresentationFinalCharacter::OnTickWhiteboardControlCheck()
 {
 	if (bWhiteboardOverlap == true)
@@ -120,7 +118,15 @@ void APresentationFinalCharacter::OnTickWhiteboardControlCheck()
 							if (GetLocalRole() < ROLE_Authority)
 							{
 								ServerUpdateOpacity(WhiteboardEditorWidget->GetWhiteboardOpacity());
-								MarkerDrawSize = WhiteboardEditorWidget->GetDrawSize();
+								float WidgetDrawSize = WhiteboardEditorWidget->GetDrawSize();
+								if (WidgetDrawSize == 0 || WidgetDrawSize == NULL)
+								{
+									MarkerDrawSize = 0.01;
+								}
+								else
+								{
+									MarkerDrawSize = WidgetDrawSize;
+								}
 								UpdateDrawSize();
 							}
 							else
@@ -135,12 +141,14 @@ void APresentationFinalCharacter::OnTickWhiteboardControlCheck()
 								//Local user sees large circle, other clients see small marker still
 								this->BoardActor->SetDrawSize(WhiteboardEditorWidget->GetDrawSize());
 							}
-
-
+							int32 ClearRender = WhiteboardEditorWidget->GetClearRender();
+							if ((ClearRender % 2) != 0)
+							{
+								ServerClearRenderTarget(ClearRender);
+							}
+							
 						}
 					}
-					/*MarkerDrawSize = WhiteboardEditorWidget->GetDrawSize();
-					BoardOpacity = WhiteboardEditorWidget->GetWhiteboardOpacity();*/
 				}
 
 				if (bDraw == true)
@@ -172,6 +180,7 @@ void APresentationFinalCharacter::OnTickWhiteboardControlCheck()
 	}
 }
 
+//Similar to above but controls the Slideshow using widget values
 void APresentationFinalCharacter::OnTickSlideControlCheck()
 {
 	if (bSlideOverlap == true)
@@ -196,7 +205,7 @@ void APresentationFinalCharacter::OnTickSlideControlCheck()
 							}
 							if (GetLocalRole() < ROLE_Authority)
 							{
-								if ((SlideControllerWidget->GetPause() % 2) != 0)
+								if ((SlideControllerWidget->GetPause() % 2) != 0 )
 								{
 									ServerPauseSlideshow(true);
 								}
@@ -214,20 +223,23 @@ void APresentationFinalCharacter::OnTickSlideControlCheck()
 	}
 }
 
+
+//Function for defining what is replicated
+//DOREPLIFETIME simply specifies to replicate the property
+//DOREPLIFETIME_CONDITION_NOTIFY means it will be replicated even if it doesn't change
 void APresentationFinalCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION_NOTIFY(APresentationFinalCharacter, bInvertColour, COND_None, REPNOTIFY_Always);
+	
 
 	DOREPLIFETIME(APresentationFinalCharacter, BoardOpacity);
+	DOREPLIFETIME(APresentationFinalCharacter, ClearRenderTarget);
 	DOREPLIFETIME(APresentationFinalCharacter, UVHitPosition);
 	DOREPLIFETIME(APresentationFinalCharacter, MarkerDrawSize);
 	DOREPLIFETIME(APresentationFinalCharacter, bStartSlideshow);
 	DOREPLIFETIME(APresentationFinalCharacter, bPauseSlideshow);
-	DOREPLIFETIME(APresentationFinalCharacter, VehicleControllerStruct);
-	DOREPLIFETIME(APresentationFinalCharacter, ControllerMapKeys);
-	DOREPLIFETIME(APresentationFinalCharacter, VehicleMapValues);
 }
 
 
@@ -327,6 +339,9 @@ void APresentationFinalCharacter::MoveRight(float Value)
 	}
 }
 
+
+//Begin Overlap dynamic -> draws widgets depending on what is being overlapped
+//Has sufficient checks to check components are valid to prevent crashes
 void APresentationFinalCharacter::BeginOverlap(UPrimitiveComponent* Comp, AActor* OtherActor, UPrimitiveComponent* otherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->GetClass()->GetName() == "BoardActor")
@@ -356,7 +371,7 @@ void APresentationFinalCharacter::BeginOverlap(UPrimitiveComponent* Comp, AActor
 		}
 
 	}
-	else if (OtherActor->GetClass()->GetName() == "SlideActor")
+	else if (OtherActor->GetClass()->GetName() == "SlideActor" || OtherActor->GetClass()->GetName() == "SlideActor_BP")
 	{
 		SlideActor = Cast<ASlideActor>(OtherActor);
 		if (IsLocallyControlled())
@@ -386,6 +401,8 @@ void APresentationFinalCharacter::BeginOverlap(UPrimitiveComponent* Comp, AActor
 	}
 }
 
+
+//if either widget is valid, remove from the viewport so it's not constantly on screen
 void APresentationFinalCharacter::EndOverlap(UPrimitiveComponent* Comp, AActor* OtherActor, UPrimitiveComponent* otherComp, int32 OtherBodyIndex)
 {
 	if (HUD)
@@ -402,6 +419,9 @@ void APresentationFinalCharacter::EndOverlap(UPrimitiveComponent* Comp, AActor* 
 	bWhiteboardOverlap = false;
 }
 
+
+//When F is pressed, will allow for the cursor to be shown
+//Pressed again it will make the mouse move the camera in the game
 void APresentationFinalCharacter::SwitchInputMode()
 {
 	if (PlayerController)
@@ -427,6 +447,7 @@ void APresentationFinalCharacter::SwitchInputMode()
 	}
 }
 
+//Reduces the FOV when zooming in, increases it when zooming out up to a maximum of 90 degrees
 void APresentationFinalCharacter::ZoomIn()
 {
 	FirstPersonCameraComponent->SetFieldOfView((FirstPersonCameraComponent->FieldOfView) * 0.75);
@@ -445,6 +466,9 @@ void APresentationFinalCharacter::ZoomOut()
 	
 }
 
+//Setter functions for Drawing
+//Gets checked in the board tick function before drawing to the board
+
 void APresentationFinalCharacter::SetbDrawTrue()
 {
 	bDraw = true;
@@ -456,13 +480,19 @@ void APresentationFinalCharacter::SetbDrawFalse()
 }
 
 
+//Draws to a whiteboard
+//Uses the unit forward vector of the camera and does a line trace between the camera location
+//and the 1500*unit forward vector (1500 is in cm) so you can't draw really far away
+//then checks a boardactor has been hit and casts to ABoardActor.
+//UGameplayStatics library finds where the hit occurs from the FHitResult
+
 FVector2D APresentationFinalCharacter::Draw()
 {
 	FVector2D UVHit;
 	if (bWhiteboardOverlap == true)
 	{
 		FVector CameraLocation = FirstPersonCameraComponent->GetComponentLocation();
-		FVector ForwardVector = 1000 * FirstPersonCameraComponent->GetForwardVector();
+		FVector ForwardVector = 1500 * FirstPersonCameraComponent->GetForwardVector();
 
 		TArray<AActor*> Actors;
 		FHitResult HitResult;
@@ -486,6 +516,9 @@ FVector2D APresentationFinalCharacter::Draw()
 	return UVHit;
 }
 
+
+//When bInvertColour is replicated, call the UpdateInvert
+//function to set the invertcolour on the whiteboard
 void APresentationFinalCharacter::OnRep_Invert()
 {
 	UpdateInvert();
@@ -496,11 +529,15 @@ void APresentationFinalCharacter::UpdateInvert()
 	this->BoardActor->Client_OnRep_SetInvertColour(bInvertColour);
 }
 
+//Could do a check here (usually used in gaming to check for cheating)
+//Haven't done it because I don't expect it to be exploited at any point
+//If you return false, client gets kicked from server
 bool APresentationFinalCharacter::ServerUpdateInvert_Validate(bool InbInvert)
 {
 	return true;
 }
 
+//Server RPC for client to pass parameter to server
 void APresentationFinalCharacter::ServerUpdateInvert_Implementation(bool InbInvert)
 {
 	bInvertColour = InbInvert;
@@ -574,6 +611,25 @@ void APresentationFinalCharacter::ServerUpdateDrawSize_Implementation(float inDr
 	MarkerDrawSize = inDrawSize; 
 }
 
+void APresentationFinalCharacter::OnRep_ClearRenderTarget()
+{
+	UpdateClearRenderTarget();
+}
+
+void APresentationFinalCharacter::UpdateClearRenderTarget()
+{
+	this->BoardActor->ClearBoard();
+}
+
+bool APresentationFinalCharacter::ServerClearRenderTarget_Validate(int32 InbClearRender)
+{
+	return true;
+}
+
+void APresentationFinalCharacter::ServerClearRenderTarget_Implementation(int32 InClearRender)
+{
+	ClearRenderTarget = InClearRender;
+}
 
 void APresentationFinalCharacter::OnRep_StartSlideshow()
 {
@@ -599,7 +655,7 @@ void APresentationFinalCharacter::ServerStartSlideshow_Implementation(bool inbSt
 void APresentationFinalCharacter::OnRep_PauseSlideshow()
 {
 	UpdatePauseSlideshow();
-	UE_LOG(LogTemp, Log, TEXT("onrep"));
+	//UE_LOG(LogTemp, Log, TEXT("onrep"));
 }
 
 void APresentationFinalCharacter::UpdatePauseSlideshow()
@@ -617,63 +673,35 @@ void APresentationFinalCharacter::ServerPauseSlideshow_Implementation(bool inbPa
 	bPauseSlideshow = inbPauseSlideshow;
 }
 
-
-bool APresentationFinalCharacter::ServerSpawnAndPossessPawn_Validate(APlayerController* inPlayerController, TSubclassOf<APawn> inPawn)
-{
-	return true;
-}
-
-void APresentationFinalCharacter::ServerSpawnAndPossessPawn_Implementation(APlayerController* inPlayerController, TSubclassOf<class APawn> inPawn)
-{
-	FVector SpawnLocation;
-	AMultiplayerVehicleSpawnLocation* SpawnLocationActor = Cast<AMultiplayerVehicleSpawnLocation>(UGameplayStatics::GetActorOfClass(GetWorld(), AMultiplayerVehicleSpawnLocation::StaticClass()));
-
-	if (SpawnLocationActor)
-	{
-		SpawnLocation = SpawnLocationActor->GetActorLocation();
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-		if (ControlledVehicle)
-		{
-			inPlayerController->Possess(ControlledVehicle);
-		}
-		else
-		{
-			APawn* const SpawnedPawn = GetWorld()->SpawnActor<APawn>(inPawn->GetDefaultObject()->GetClass(), SpawnLocation, FRotator(0, 0, 0), SpawnParams);
-			ControlledVehicle = Cast<APhysXVehicle>(SpawnedPawn);
-			if (ControlledVehicle)
-			{
-				inPlayerController->Possess(ControlledVehicle);
-			}
-			//ControlledVehicle = Cast<TSubclassOf<class APawn>>(SpawnedPawn);
-			//inPlayerController->Possess(SpawnedPawn);
-		}
-
-	}
-}
-
-
 bool APresentationFinalCharacter::ServerSwitchPossessedPawn_Validate(APlayerController* inPlayerController, TSubclassOf<APawn> inPawn)
 {
 	return true;
 }
 
+//Unpossesses the player character and possesses the controlled vehicle
+//if there is no controlled vehicle, calls the spawnpawn function to spawn one
 void APresentationFinalCharacter::ServerSwitchPossessedPawn_Implementation(APlayerController* inPlayerController, TSubclassOf<class APawn> inPawn)
 {
-	UE_LOG(LogTemp, Log, TEXT("Made it to server switch pawn"));
+	//UE_LOG(LogTemp, Log, TEXT("Made it to server switch pawn"));
 	inPlayerController->UnPossess();
 	if (ControlledVehicle)
 	{
+		ControlledVehicle->SetPlayerCharacter(this);
 		inPlayerController->Possess(ControlledVehicle);
 	}
 	else
 	{
 		ServerSpawnPawn(inPawn);
+		ControlledVehicle->SetPlayerCharacter(this);
 		inPlayerController->Possess(ControlledVehicle);
 	}
 }
 
+//Originally was going to call a function when the vehicle struct replicates
+//so all users have all vehicles on their gamestate
+//this may be useful for filling graphs with multiple users data later
+//however could be achieved by just sending the graph data and plotting it
+//on the same axis
 void APresentationFinalCharacter::OnRep_VehicleStruct()
 {
 	UpdateVehicleStruct();
@@ -689,9 +717,15 @@ bool APresentationFinalCharacter::ServerSpawnPawn_Validate(TSubclassOf<APawn> in
 	return true;
 }
 
+/* Will always spawn the vehicle but will adjust it if there's something in the way
+* Finds the position of the SpawnLocationActor defined in the PhysXVehicle module
+* using the GameplayStatics library and Casts it to AMultiplayerVehicleSpawnLocation
+* as the GameplayStatics only returns AActor*
+* Then spawns a vehicle at that lcoation
+*/
 void APresentationFinalCharacter::ServerSpawnPawn_Implementation(TSubclassOf<class APawn> inPawn)
 {
-	UE_LOG(LogTemp, Log, TEXT("Made it to server spawn pawn"));
+	//UE_LOG(LogTemp, Log, TEXT("Made it to server spawn pawn"));
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
@@ -704,25 +738,21 @@ void APresentationFinalCharacter::ServerSpawnPawn_Implementation(TSubclassOf<cla
 	}
 }
 
-APhysXVehicle* APresentationFinalCharacter::GetPhysXVehicleFromController(APlayerController* inController)
+
+//Spawns a whiteboard only on the client that calls the function - a private whiteboard, if you will
+//SpawnRotation is set from the ForwardVector of the character + 90 degrees in the Yaw axis
+//It will always face the client
+void APresentationFinalCharacter::ClientSpawnWhiteboard()
 {
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
 
-	for (int32 i = 0; i < VehicleMapValues.Num(); i++)
-	{
-		APlayerController* PC = ControllerMapKeys[i];
-		APhysXVehicle* V = VehicleMapValues[i];
-	}
+	FVector ForwardVector = FirstPersonCameraComponent->GetForwardVector();
+	FVector SpawnLocation = FirstPersonCameraComponent->GetComponentLocation() + 400 * ForwardVector;
 
-	VehicleControllerStruct.GetValueFromKey(inController);
-	if (VehicleMapValues.Num() != 0)
-	{
-		return VehicleMapValues[0];
-	}
-	else
-	{
-		return nullptr;
-	}
+	FRotator SpawnRotation = ForwardVector.Rotation() + FRotator(0, 0, 90);
 
+	GetWorld()->SpawnActor<ABoardActor>(ABoardActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
 }
 
 

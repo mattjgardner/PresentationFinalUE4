@@ -17,9 +17,11 @@ class AVirtualPresentationHUD : public AHUD
 public:
 	AVirtualPresentationHUD();
 
+	//Whiteboard editor widget added to viewport
 	UPROPERTY()
 		bool bAddedToViewport;
 
+	//Slide editor widget added to viewport
 	UPROPERTY()
 		bool bAddedSlideWidgetToViewport;
 
@@ -39,10 +41,6 @@ public:
 
 	void RemoveSlideControllerWidget();
 
-
-
-	//UPROPERTY()
-	//class UUserWidget* IPWidget;
 
 	UFUNCTION()
 		UMyUserWidget* GetWhiteboardEditorWidget();

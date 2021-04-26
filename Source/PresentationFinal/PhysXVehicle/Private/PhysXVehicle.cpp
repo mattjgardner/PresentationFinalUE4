@@ -33,6 +33,9 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 APhysXVehicle::APhysXVehicle()
 {
+
+	//AddToRoot();
+
 	SportsCarSKMesh = ConstructorHelpers::FObjectFinder<USkeletalMesh>(TEXT("/Game/VehicleVarietyPack/Skeletons/SK_SportsCar.SK_SportsCar")).Object;
 	if (SportsCarSKMesh)
 	{
@@ -95,6 +98,7 @@ APhysXVehicle::APhysXVehicle()
 
 	Vehicle->ComputeConstants();
 
+
 #if WITH_EDITOR
 
 	GetVertexPositions();
@@ -110,33 +114,6 @@ APhysXVehicle::APhysXVehicle()
 void APhysXVehicle::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//FTimerDelegate TimerDelegate;
-	//TimerDelegate.BindUFunction(this, FName("GetSuspensionOffsets"));
-
-	//GetWorld()->GetTimerManager()->
-
-	////Checks VertexPositions returns true i.e. there are positions in the array then sets drag area
-	//if (GetVertexPositions())
-	//{
-	//	Vehicle->DragArea = ComputeDragArea(Vertices);
-	//}
-	//else
-	//{
-	//	//default drag area
-	//	Vehicle->DragArea = 2.5f;
-	//}
-	//UE_LOG(LogTemp, Log, TEXT("%f"), Vehicle->DragArea);
-
-	//don't call in BeginPlay
-
-	//FTimerDelegate DragForceTimerDelegate;
-	//DragForceTimerDelegate.BindUFunction(this, FName("ComputeDragForce"));
-	//FTimerHandle DragForceTimer;
-
-	////Calls drag force calculator every second
-	//GetWorldTimerManager().SetTimer(DragForceTimer, DragForceTimerDelegate, 1, true);
-
 }
 
 void APhysXVehicle::Tick(float DeltaTime)
@@ -148,36 +125,6 @@ void APhysXVehicle::SetMaxRPM(float inMaxRPM)
 {
 	Vehicle->MaxEngineRPM = inMaxRPM;
 }
-
-//FSuspensionOffsets APhysXVehicle::GetSuspensionOffsets()
-//{
-//	//SuspensionOffsets.FrontLeftSuspensionOffset = FrontLeftWheel
-//	return SuspensionOffsets;
-//}
-
-//void APhysXVehicle::SetRPMTorque(TMap<float, float> InRPMTorque)
-//{
-//	if (InRPMTorque.Num() != 0)
-//	{
-//		Vehicle->EngineSetup.TorqueCurve.GetRichCurve().Reset();
-//		//auto Iterator = InRPMTorque.CreateIterator();
-//		//float RPM = Iterator.Key();
-//		//float Torque = Iterator.Value();
-//
-//		TArray<float> RPMs;
-//		TArray<float> Torques;
-//		InRPMTorque.GenerateKeyArray(RPMs);
-//		InRPMTorque.GenerateValueArray(Torques);
-//
-//
-//		//UE_LOG(LogTemp, Log, TEXT("%f, %f"), RPM, Torque);
-//
-//		for (int32 i = 0; i < RPMs.Num(); i++)
-//		{
-//			Vehicle->EngineSetup.TorqueCurve.GetRichCurve()->AddKey(RPMs[i], Torques[i]);
-//		}
-//	}
-//}
 
 void APhysXVehicle::SetThrottle(float inThrottle)
 {
@@ -195,16 +142,7 @@ bool APhysXVehicle::GetVertexPositions()
 {
 	MeshModel = GetMesh()->SkeletalMesh->GetImportedModel();
 	MeshModel->LODModels[0].GetVertices(Vertices);
-	//GetMesh()->GetSkeletalMeshRenderData()->LODRenderData[0].BuffersSize;
-	//uint32 NumberOfVertices = GetMesh()->GetSkeletalMeshRenderData()->LODRenderData[0].StaticVertexBuffers.PositionVertexBuffer.GetNumVertices();
 
-	//TArray<FVector> VertexPositions;
-
-	//for (FSoftSkinVertex Vertex : Vertices)
-	//{
-	//	FVector VertexPosition = Vertex.Position;
-	//	VertexPositions.Add(VertexPosition);
-	//}
 
 	if (Vertices.Num() > 0)
 	{
@@ -270,6 +208,7 @@ float APhysXVehicle::ComputeDragForce()
 	return DragForce;
 }
 
+//Calls custom function I edited in the source code to change data at runtime
 void APhysXVehicle::SetSuspensionData(float inSuspensionDampingRatio, float inMaxCompression, float inMaxDrop, float inNaturalFrequency)
 {
 	Vehicle->SetSuspensionData(inSuspensionDampingRatio, inMaxCompression, inMaxDrop, inNaturalFrequency);
@@ -303,13 +242,6 @@ float APhysXVehicle::GetMaxSuspensionCompression()
 	return MaxCompression;
 }
 
-/*
-* APlayerController* APhysXVehicle::GetPlayerController()
-* {
-*	return GetController();
-* }
-*/
-
 bool APhysXVehicle::ServerSwitchToCharacter_Validate(APlayerController* inPlayerController, APresentationFinalCharacter* inCharacter)
 {
 	return true;
@@ -317,10 +249,25 @@ bool APhysXVehicle::ServerSwitchToCharacter_Validate(APlayerController* inPlayer
 
 void APhysXVehicle::ServerSwitchToCharacter_Implementation(APlayerController* inPlayerController, APresentationFinalCharacter* inCharacter)
 {
-	if (inCharacter)
+	if (PlayerCharacter)
+	{
+		inPlayerController->Possess(PlayerCharacter);
+	}
+	else
 	{
 		inPlayerController->Possess(inCharacter);
 	}
 }
+
+void APhysXVehicle::SetPlayerCharacter(APresentationFinalCharacter* inPlayerCharacter)
+{
+	PlayerCharacter = inPlayerCharacter;
+}
+
+APresentationFinalCharacter* APhysXVehicle::GetPlayerCharacter()
+{
+	return PlayerCharacter;
+}
+
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

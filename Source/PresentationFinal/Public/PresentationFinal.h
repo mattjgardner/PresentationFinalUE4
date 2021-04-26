@@ -3,3 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+//CODE IS COMMENTED
+//NOTE: There is more "CODE" in blueprints that is also commented

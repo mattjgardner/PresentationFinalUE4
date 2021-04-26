@@ -15,7 +15,7 @@
 #include "Components/CanvasPanelSlot.h"
 
 USlideControllerWidget::USlideControllerWidget(const FObjectInitializer& ObjectInitializer) : UUserWidget(ObjectInitializer) {
-	UE_LOG(LogTemp, Log, TEXT("Made it to constructor"));
+	
 }
 
 void USlideControllerWidget::NativeConstruct()
@@ -23,6 +23,8 @@ void USlideControllerWidget::NativeConstruct()
 	Super::NativeConstruct();
 }
 
+
+//Rebuild Widget described in the Whiteboard.cpp file
 TSharedRef<SWidget> USlideControllerWidget::RebuildWidget()
 {
 
@@ -90,11 +92,17 @@ TSharedRef<SWidget> USlideControllerWidget::RebuildWidget()
 	return Widget;
 }
 
+//Adds 1 to the PauseIndex
+//Pausing only works when virtual host is not used
 void USlideControllerWidget::SetPause()
 {
 	PauseIndex++;
 }
 
+//Returns the pause index.
+//This is called in PresentationFinalCharacter
+//if PauseIndex % 2 != 0 the presentation is paused
+//if PauseIndex % 2 == 0 the presentation is unpaused
 int32 USlideControllerWidget::GetPause()
 {
 	return PauseIndex;

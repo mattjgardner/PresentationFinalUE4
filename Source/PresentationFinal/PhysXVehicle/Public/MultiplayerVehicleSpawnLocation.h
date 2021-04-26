@@ -15,6 +15,8 @@ public:
 	// Sets default values for this actor's properties
 	AMultiplayerVehicleSpawnLocation();
 
+	//Contains just a scene component so the location to spawn an actor can be changed
+	//within the editor using a visual component
 	UPROPERTY(BlueprintReadWrite)
 		USceneComponent* LocationComponent;
 
